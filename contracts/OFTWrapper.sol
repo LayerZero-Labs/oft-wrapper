@@ -32,7 +32,11 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         oftBps[_oft] = _bps;
     }
 
-    function withdrawFees(address _oft, address _to, uint256 _amount) external onlyOwner {
+    function withdrawFees(
+        address _oft,
+        address _to,
+        uint256 _amount
+    ) external onlyOwner {
         IOFT(_oft).safeTransfer(_to, _amount);
         emit WrapperFeeWithdrawn(_oft, _to, _amount);
     }
@@ -50,15 +54,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     ) external payable override nonReentrant {
         (uint256 amount, uint256 wrapperFee) = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
 
-        IOFT(_oft).sendFrom{value:msg.value}(
-            msg.sender,
-            _dstChainId,
-            _toAddress,
-            amount,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        ); // swap amount less fees
+        IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams); // swap amount less fees
 
         emit WrapperSwapped(_feeObj.partnerId, _amount, wrapperFee);
     }
@@ -69,7 +65,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         uint256 _amount,
         uint256 _minAmount,
         FeeObj calldata _feeObj
-    ) internal returns(uint256, uint256) {
+    ) internal returns (uint256, uint256) {
         (uint256 amount, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
         require(amount >= _minAmount, "OFTWrapper: amount to transfer < minAmount");
 
@@ -85,7 +81,16 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _oft,
         uint256 _amount,
         uint256 _callerBps
-    ) public view override returns (uint256 amount, uint256 wrapperFee, uint256 callerFee) {
+    )
+        public
+        view
+        override
+        returns (
+            uint256 amount,
+            uint256 wrapperFee,
+            uint256 callerFee
+        )
+    {
         uint256 wrapperBps;
 
         if (oftBps[_oft] == MAX_UINT) {
@@ -96,10 +101,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
             wrapperBps = defaultBps;
         }
 
-        require(wrapperBps + _callerBps < BPS_DENOMINATOR, "OFTWrapper: Fee bps exceeds 100%"); // TODO revert msg
+        require(wrapperBps + _callerBps < BPS_DENOMINATOR, "OFTWrapper: Fee bps exceeds 100%");
 
-        wrapperFee = wrapperBps > 0 ? _amount * wrapperBps / BPS_DENOMINATOR : 0;
-        callerFee = _callerBps > 0 ? _amount * _callerBps / BPS_DENOMINATOR : 0;
+        wrapperFee = wrapperBps > 0 ? (_amount * wrapperBps) / BPS_DENOMINATOR : 0;
+        callerFee = _callerBps > 0 ? (_amount * _callerBps) / BPS_DENOMINATOR : 0;
         amount = wrapperFee > 0 || callerFee > 0 ? _amount - wrapperFee - callerFee : _amount;
     }
 
@@ -114,12 +119,6 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     ) external view override returns (uint nativeFee, uint zroFee) {
         (uint256 amount, , ) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
 
-        return IOFT(_oft).estimateSendFee(
-            _dstChainId,
-            _toAddress,
-            amount,
-            _useZro,
-            _adapterParams
-        );
+        return IOFT(_oft).estimateSendFee(_dstChainId, _toAddress, amount, _useZro, _adapterParams);
     }
 }

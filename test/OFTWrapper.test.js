@@ -8,11 +8,11 @@ describe("OFTWrapper:", function () {
     const symbol = "OFT"
     const partnerId = "0x0003"
 
-    let owner, caller, badUser, OftWrapper, oftWrapper, LZEndpointMock,lzEndpointSrcMock, lzEndpointDstMock
+    let owner, caller, badUser, OftWrapper, oftWrapper, LZEndpointMock, lzEndpointSrcMock, lzEndpointDstMock
     let OFT, OFTSrc, OFTDst, dstPath, srcPath, BP_DENOMINATOR, MAX_UINT
 
     before(async function () {
-        [owner, caller, badUser] = (await ethers.getSigners())
+        ;[owner, caller, badUser] = await ethers.getSigners()
 
         LZEndpointMock = await ethers.getContractFactory("LZEndpointMock")
         OftWrapper = await ethers.getContractFactory("OFTWrapper")
@@ -85,11 +85,10 @@ describe("OFTWrapper:", function () {
         await oftWrapper.setOFTBps(OFTSrc.address, oftBps)
         await oftWrapper.setDefaultBps(defaultBps)
 
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
 
-        let {amount, wrapperFee, callerFee} = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
-
-        expect(wrapperFee).to.be.equal(amountToSwap * oftBps / BP_DENOMINATOR)
-        expect(callerFee).to.be.equal(amountToSwap * callerBps / BP_DENOMINATOR)
+        expect(wrapperFee).to.be.equal((amountToSwap * oftBps) / BP_DENOMINATOR)
+        expect(callerFee).to.be.equal((amountToSwap * callerBps) / BP_DENOMINATOR)
         expect(amountToSwap - wrapperFee - callerFee).to.be.equal(amount)
     })
 
@@ -100,10 +99,10 @@ describe("OFTWrapper:", function () {
 
         await oftWrapper.setDefaultBps(defaultBps)
 
-        let {amount, wrapperFee, callerFee} = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
 
-        expect(wrapperFee).to.be.equal(amountToSwap * defaultBps / BP_DENOMINATOR)
-        expect(callerFee).to.be.equal(amountToSwap * callerBps / BP_DENOMINATOR)
+        expect(wrapperFee).to.be.equal((amountToSwap * defaultBps) / BP_DENOMINATOR)
+        expect(callerFee).to.be.equal((amountToSwap * callerBps) / BP_DENOMINATOR)
         expect(amountToSwap - wrapperFee - callerFee).to.be.equal(amount)
     })
 
@@ -115,10 +114,10 @@ describe("OFTWrapper:", function () {
         await oftWrapper.setDefaultBps(defaultBps)
         await oftWrapper.setOFTBps(OFTSrc.address, MAX_UINT)
 
-        let {amount, wrapperFee, callerFee} = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
 
-        expect(wrapperFee).to.be.equal(amountToSwap * 0 / BP_DENOMINATOR)
-        expect(callerFee).to.be.equal(amountToSwap * callerBps / BP_DENOMINATOR)
+        expect(wrapperFee).to.be.equal((amountToSwap * 0) / BP_DENOMINATOR)
+        expect(callerFee).to.be.equal((amountToSwap * callerBps) / BP_DENOMINATOR)
         expect(amountToSwap - wrapperFee - callerFee).to.be.equal(amount)
     })
 
@@ -151,7 +150,7 @@ describe("OFTWrapper:", function () {
 
         const lzFee = (await oftWrapper.estimateSendFee(OFTSrc.address, chainIdDst, owner.address, amountToSwap, false, "0x", feeObj)).nativeFee
 
-        let {amount, wrapperFee, callerFee} = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
 
         await oftWrapper.sendOFT(
             OFTSrc.address,
@@ -163,7 +162,7 @@ describe("OFTWrapper:", function () {
             ethers.constants.AddressZero,
             "0x",
             feeObj,
-            {value: lzFee}
+            { value: lzFee }
         )
 
         expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(0)
@@ -187,18 +186,20 @@ describe("OFTWrapper:", function () {
 
         expect(amount).to.be.lt(amountToSwap)
 
-        await expect(oftWrapper.sendOFT(
-            OFTSrc.address,
-            chainIdDst,
-            owner.address,
-            amountToSwap,
-            amountToSwap,
-            owner.address,
-            ethers.constants.AddressZero,
-            "0x",
-            feeObj,
-            {value: lzFee}
-        )).to.be.revertedWith("OFTWrapper: amount to transfer < minAmount")
+        await expect(
+            oftWrapper.sendOFT(
+                OFTSrc.address,
+                chainIdDst,
+                owner.address,
+                amountToSwap,
+                amountToSwap,
+                owner.address,
+                ethers.constants.AddressZero,
+                "0x",
+                feeObj,
+                { value: lzFee }
+            )
+        ).to.be.revertedWith("OFTWrapper: amount to transfer < minAmount")
     })
 
     it("withdrawFees()", async function () {
@@ -212,7 +213,7 @@ describe("OFTWrapper:", function () {
         await OFTSrc.approve(oftWrapper.address, amountToSwap)
         const lzFee = (await oftWrapper.estimateSendFee(OFTSrc.address, chainIdDst, owner.address, amountToSwap, false, "0x", feeObj)).nativeFee
 
-        let {amount, wrapperFee, callerFee} = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
 
         await oftWrapper.sendOFT(
             OFTSrc.address,
@@ -224,14 +225,12 @@ describe("OFTWrapper:", function () {
             ethers.constants.AddressZero,
             "0x",
             feeObj,
-            {value: lzFee}
+            { value: lzFee }
         )
-
 
         expect(await OFTSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
         expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(0)
         await oftWrapper.withdrawFees(OFTSrc.address, owner.address, wrapperFee)
         expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(wrapperFee)
     })
-
 })
