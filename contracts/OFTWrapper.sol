@@ -18,17 +18,17 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     mapping(address => uint256) public oftBps;
 
     constructor(uint256 _defaultBps) {
-        require(_defaultBps <= BPS_DENOMINATOR, "OFTWrapper: defaultBps > 100%");
+        require(_defaultBps < BPS_DENOMINATOR, "OFTWrapper: defaultBps >= 100%");
         defaultBps = _defaultBps;
     }
 
     function setDefaultBps(uint256 _defaultBps) external onlyOwner {
-        require(_defaultBps <= BPS_DENOMINATOR, "OFTWrapper: defaultBps > 100%");
+        require(_defaultBps < BPS_DENOMINATOR, "OFTWrapper: defaultBps >= 100%");
         defaultBps = _defaultBps;
     }
 
     function setOFTBps(address _oft, uint256 _bps) external onlyOwner {
-        require(_bps <= BPS_DENOMINATOR || _bps == MAX_UINT, "OFTWrapper: oftBps[_oft] > 100%");
+        require(_bps < BPS_DENOMINATOR || _bps == MAX_UINT, "OFTWrapper: oftBps[_oft] >= 100%");
         oftBps[_oft] = _bps;
     }
 
@@ -101,7 +101,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
             wrapperBps = defaultBps;
         }
 
-        require(wrapperBps + _callerBps < BPS_DENOMINATOR, "OFTWrapper: Fee bps exceeds 100%");
+        require(wrapperBps + _callerBps < BPS_DENOMINATOR, "OFTWrapper: Fee bps >= 100%");
 
         wrapperFee = wrapperBps > 0 ? (_amount * wrapperBps) / BPS_DENOMINATOR : 0;
         callerFee = _callerBps > 0 ? (_amount * _callerBps) / BPS_DENOMINATOR : 0;

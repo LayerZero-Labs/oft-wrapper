@@ -43,43 +43,53 @@ describe("OFTWrapper:", function () {
         await OFTDst.setTrustedRemote(chainIdSrc, srcPath) // for B, set A
     })
 
-    it("constructor() - reverts if defaultBps exceeds 100%", async function () {
+    it("constructor() - sets default bps properly", async function () {
         const OftWrapper = await ethers.getContractFactory("OFTWrapper")
-        await expect(OftWrapper.deploy(BP_DENOMINATOR + 1)).to.be.revertedWith("OFTWrapper: defaultBps > 100%")
+        oftWrapper = await OftWrapper.deploy(BP_DENOMINATOR - 1)
+        expect(await oftWrapper.defaultBps()).to.be.equal(BP_DENOMINATOR - 1)
+    })
+
+    it("constructor() - reverts if defaultBps >= 100%", async function () {
+        const OftWrapper = await ethers.getContractFactory("OFTWrapper")
+        await expect(OftWrapper.deploy(BP_DENOMINATOR)).to.be.revertedWith("OFTWrapper: defaultBps >= 100%")
     })
 
     it("setDefaultBps()", async function () {
         expect(await oftWrapper.defaultBps()).to.be.equal(0)
         await oftWrapper.setDefaultBps(10)
         expect(await oftWrapper.defaultBps()).to.be.equal(10)
+        await oftWrapper.setDefaultBps(BP_DENOMINATOR - 1)
+        expect(await oftWrapper.defaultBps()).to.be.equal(BP_DENOMINATOR - 1)
     })
 
     it("setDefaultBps() - reverts from non owner", async function () {
         await expect(oftWrapper.connect(badUser).setDefaultBps(10)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it("setDefaultBps() - reverts if bps over 100%", async function () {
-        await expect(oftWrapper.setDefaultBps(BP_DENOMINATOR + 1)).to.be.revertedWith("OFTWrapper: defaultBps > 100%")
+    it("setDefaultBps() - reverts if bps == 100%", async function () {
+        await expect(oftWrapper.setDefaultBps(BP_DENOMINATOR)).to.be.revertedWith("OFTWrapper: defaultBps >= 100%")
     })
 
     it("setOFTBps()", async function () {
         expect(await oftWrapper.oftBps(OFTSrc.address)).to.be.equal(0)
         await oftWrapper.setOFTBps(OFTSrc.address, 10)
         expect(await oftWrapper.oftBps(OFTSrc.address)).to.be.equal(10)
+        await oftWrapper.setOFTBps(OFTSrc.address, BP_DENOMINATOR - 1)
+        expect(await oftWrapper.oftBps(OFTSrc.address)).to.be.equal(BP_DENOMINATOR - 1)
     })
 
     it("setOFTBps() - reverts from non owner", async function () {
         await expect(oftWrapper.connect(badUser).setOFTBps(OFTSrc.address, 10)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it("setOFTBps() - reverts if bps over 100%", async function () {
-        await expect(oftWrapper.setOFTBps(OFTSrc.address, BP_DENOMINATOR + 1)).to.be.revertedWith("OFTWrapper: oftBps[_oft] > 100%")
+    it("setOFTBps() - reverts if bps == 100%", async function () {
+        await expect(oftWrapper.setOFTBps(OFTSrc.address, BP_DENOMINATOR)).to.be.revertedWith("OFTWrapper: oftBps[_oft] >= 100%")
     })
 
     it("getAmountAndFees() - oftBps override default", async function () {
         let amountToSwap = 10000000
         let oftBps = 10
-        let defaultBps = 10000
+        let defaultBps = BP_DENOMINATOR - 1
         let callerBps = 100
 
         await oftWrapper.setOFTBps(OFTSrc.address, oftBps)
@@ -123,12 +133,12 @@ describe("OFTWrapper:", function () {
 
     it("getAmountAndFees() - reverts if collective bps is over BPS denominator", async function () {
         let amountToSwap = 10000000
-        let defaultBps = BP_DENOMINATOR
+        let defaultBps = BP_DENOMINATOR - 1
         let callerBps = 1
 
         await oftWrapper.setDefaultBps(defaultBps)
 
-        await expect(oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)).to.be.revertedWith("OFTWrapper: Fee bps exceeds 100%")
+        await expect(oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)).to.be.revertedWith("OFTWrapper: Fee bps >= 100%")
     })
 
     it("sendOFT()", async function () {
