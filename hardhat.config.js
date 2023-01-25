@@ -71,7 +71,7 @@ module.exports = {
 
   namedAccounts: {
     deployer: {
-      default: 0,    // wallet address 0, of the mnemonic in .env
+      default: 2,    // wallet address 0, of the mnemonic in .env
     },
     proxyOwner: {
       default: 1,
@@ -112,6 +112,11 @@ module.exports = {
     fantom: {
       url: `https://rpcapi.fantom.network`,
       chainId: 250,
+      accounts: accounts(),
+    },
+    metis: {
+      url: `https://andromeda.metis.io/?owner=1088`,
+      chainId: 1088,
       accounts: accounts(),
     },
 
