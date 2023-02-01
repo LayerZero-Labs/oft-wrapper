@@ -53,12 +53,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         bytes calldata _adapterParams,
         FeeObj calldata _feeObj
     ) external payable override nonReentrant {
-        (uint256 amount, uint256 wrapperFee) = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+        uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
 
         // swap amount less fees
         IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams);
-
-        emit WrapperSwapped(_feeObj.partnerId, _amount, wrapperFee);
     }
 
     function sendOFTV2(
@@ -70,12 +68,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
     ) external payable nonReentrant {
-        (uint256 amount, uint256 wrapperFee) = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+        uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
 
         // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
         IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
-
-        emit WrapperSwapped(_feeObj.partnerId, _amount, wrapperFee);
     }
 
     // extracted out of sendOFT() due to too many local variables
@@ -84,7 +80,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         uint256 _amount,
         uint256 _minAmount,
         FeeObj calldata _feeObj
-    ) internal returns (uint256, uint256) {
+    ) internal returns (uint256) {
         (uint256 amount, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
         require(amount >= _minAmount, "OFTWrapper: amount to transfer < minAmount");
 
@@ -93,7 +89,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         oft.safeTransferFrom(msg.sender, address(this), wrapperFee); // pay wrapper
         oft.safeTransferFrom(msg.sender, _feeObj.caller, callerFee); // pay caller
 
-        return (amount, wrapperFee);
+        emit WrapperFees(_feeObj.partnerId, wrapperFee, callerFee);
+
+        return amount;
     }
 
     function getAmountAndFees(

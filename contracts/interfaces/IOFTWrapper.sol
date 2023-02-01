@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@layerzerolabs/solidity-examples/contracts/token/oft/v2/IOFTV2.sol";
 
 interface IOFTWrapper {
-    event WrapperSwapped(bytes2 indexed partnerId, uint256 amount, uint256 wrapperFee);
+    event WrapperFees(bytes2 indexed partnerId, uint256 wrapperFee, uint256 callerFee);
     event WrapperFeeWithdrawn(address indexed oft, address to, uint256 amount);
 
     struct FeeObj {
