@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@layerzerolabs/solidity-examples/contracts/token/oft/v2/IOFTV2.sol";
 import "@layerzerolabs/solidity-examples/contracts/token/oft/IOFT.sol";
 import "./interfaces/IOFTWrapper.sol";
 
@@ -54,7 +55,25 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     ) external payable override nonReentrant {
         (uint256 amount, uint256 wrapperFee) = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
 
-        IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams); // swap amount less fees
+        // swap amount less fees
+        IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams);
+
+        emit WrapperSwapped(_feeObj.partnerId, _amount, wrapperFee);
+    }
+
+    function sendOFTV2(
+        address _oft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable nonReentrant {
+        (uint256 amount, uint256 wrapperFee) = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+
+        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
+        IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
 
         emit WrapperSwapped(_feeObj.partnerId, _amount, wrapperFee);
     }
@@ -120,5 +139,19 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         (uint256 amount, , ) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
 
         return IOFT(_oft).estimateSendFee(_dstChainId, _toAddress, amount, _useZro, _adapterParams);
+    }
+
+    function estimateSendFeeV2(
+        address _oft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        bool _useZro,
+        bytes calldata _adapterParams,
+        FeeObj calldata _feeObj
+    ) external view override returns (uint nativeFee, uint zroFee) {
+        (uint256 amount, , ) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
+
+        return IOFTV2(_oft).estimateSendFee(_dstChainId, _toAddress, amount, _useZro, _adapterParams);
     }
 }
