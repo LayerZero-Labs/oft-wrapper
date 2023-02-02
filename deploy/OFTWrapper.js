@@ -16,19 +16,19 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     //     });
     // }
 
-    const defaultBps = 2
-
-    const { address } = await deploy("OFTWrapper", {
-        from: deployer,
-        args: [defaultBps],
-        log: true,
-        waitConfirmations: 3,
-    })
-
-    let accounts = await ethers.getSigners()
-    let owner = accounts[2] // me
-    let oftWrapper = await ethers.getContract("OFTWrapper")
-    await oftWrapper.connect(owner).transferOwnership(MULTI_SIGS[hre.network.name])
+    // const defaultBps = 2
+    //
+    // const { address } = await deploy("OFTWrapper", {
+    //     from: deployer,
+    //     args: [defaultBps],
+    //     log: true,
+    //     waitConfirmations: 3,
+    // })
+    //
+    // let accounts = await ethers.getSigners()
+    // let owner = accounts[2] // me
+    // let oftWrapper = await ethers.getContract("OFTWrapper")
+    // await oftWrapper.connect(owner).transferOwnership(MULTI_SIGS[hre.network.name])
 
     await hre.run("verifyContract", { contract: "OFTWrapper" })
 }

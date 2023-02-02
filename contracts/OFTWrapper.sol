@@ -14,6 +14,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
 
     uint256 public constant BPS_DENOMINATOR = 10000;
     uint256 public constant MAX_UINT = 2**256 - 1; // indicates a bp fee of 0 that overrides the default bps
+    mapping(address => bool) public tokenApproved;
 
     uint256 public defaultBps;
     mapping(address => uint256) public oftBps;
@@ -54,6 +55,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         FeeObj calldata _feeObj
     ) external payable override nonReentrant {
         uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+        require(amount > 0, "OFTWrapper: amount to send is 0");
 
         // swap amount less fees
         IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams);
@@ -69,14 +71,66 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         FeeObj calldata _feeObj
     ) external payable nonReentrant {
         uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+        require(amount > 0, "OFTWrapper: amount to send is 0");
 
         // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
         IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
     }
 
+    function sendProxyOFTV2(
+        address _token,
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable nonReentrant {
+        uint256 amount = _getAmountAndPayFee(_token, _amount, _minAmount, _feeObj);
+        require(amount > 0, "OFTWrapper: amount to send is 0");
+
+        {
+            // move tokens into contract
+            IOFT token = IOFT(_token);
+            token.safeTransferFrom(msg.sender, address(this), amount);
+
+            // only call max approval once
+            if (!tokenApproved[token]) {
+                tokenApproved[token] = true;
+                // allow proxy to spend the tokens to be transferred
+                token.safeApprove(_proxyOft, MAX_UINT);
+            }
+        }
+
+        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
+        IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
+    }
+
+    function sendProxyOFTFeeV2(
+        address _token,
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable nonReentrant {
+//        uint256 amount = _getAmountAndPayFee(_token, _amount, _minAmount, _feeObj);
+//        require(amount > 0, "OFTWrapper: amount to send is 0");
+//
+//        // move tokens into contract
+//        IOFT token = IOFT(_token);
+//        token.safeTransferFrom(msg.sender, address(this), amount);
+//
+//        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
+//        IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
+    }
+
     // extracted out of sendOFT() due to too many local variables
     function _getAmountAndPayFee(
-        address _oft,
+        address _token,
         uint256 _amount,
         uint256 _minAmount,
         FeeObj calldata _feeObj
@@ -84,10 +138,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         (uint256 amount, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
         require(amount >= _minAmount, "OFTWrapper: amount to transfer < minAmount");
 
-        IOFT oft = IOFT(_oft);
+        IOFT token = IOFT(_token);
 
-        oft.safeTransferFrom(msg.sender, address(this), wrapperFee); // pay wrapper
-        oft.safeTransferFrom(msg.sender, _feeObj.caller, callerFee); // pay caller
+        if (wrapperFee > 0) token.safeTransferFrom(msg.sender, address(this), wrapperFee); // pay wrapper
+        if (callerFee > 0) token.safeTransferFrom(msg.sender, _feeObj.caller, callerFee); // pay caller
 
         emit WrapperFees(_feeObj.partnerId, wrapperFee, callerFee);
 
