@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@layerzerolabs/solidity-examples/contracts/token/oft/v2/IOFTV2.sol";
+import "@layerzerolabs/solidity-examples/contracts/token/oft/v2/fee/IOFTWithFee.sol";
 import "@layerzerolabs/solidity-examples/contracts/token/oft/IOFT.sol";
 import "./interfaces/IOFTWrapper.sol";
 
@@ -29,9 +30,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         defaultBps = _defaultBps;
     }
 
-    function setOFTBps(address _oft, uint256 _bps) external onlyOwner {
+    function setOFTBps(address _token, uint256 _bps) external onlyOwner {
         require(_bps < BPS_DENOMINATOR || _bps == MAX_UINT, "OFTWrapper: oftBps[_oft] >= 100%");
-        oftBps[_oft] = _bps;
+        oftBps[_token] = _bps;
     }
 
     function withdrawFees(
@@ -57,7 +58,6 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
         require(amount > 0, "OFTWrapper: amount to send is 0");
 
-        // swap amount less fees
         IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
@@ -73,12 +73,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
         require(amount > 0, "OFTWrapper: amount to send is 0");
 
-        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
-        IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
+        IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amount, _callParams);
     }
 
     function sendProxyOFTV2(
-        address _token,
         address _proxyOft,
         uint16 _dstChainId,
         bytes32 _toAddress,
@@ -87,28 +85,15 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
     ) external payable nonReentrant {
-        uint256 amount = _getAmountAndPayFee(_token, _amount, _minAmount, _feeObj);
-        require(amount > 0, "OFTWrapper: amount to send is 0");
+        address token = IOFTV2(_proxyOft).token();
+        uint256 amountToSwap = _getAmountAndPayFee(token, _amount, _minAmount, _feeObj);
+        require(amountToSwap > 0, "OFTWrapper: amount to swap is 0");
 
-        {
-            // move tokens into contract
-            IOFT token = IOFT(_token);
-            token.safeTransferFrom(msg.sender, address(this), amount);
-
-            // only call max approval once
-            if (!tokenApproved[token]) {
-                tokenApproved[token] = true;
-                // allow proxy to spend the tokens to be transferred
-                token.safeApprove(_proxyOft, MAX_UINT);
-            }
-        }
-
-        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
-        IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
+        _moveProxyTokensToWrapper(token, _proxyOft, amountToSwap);
+        IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amountToSwap, _callParams);
     }
 
     function sendProxyOFTFeeV2(
-        address _token,
         address _proxyOft,
         uint16 _dstChainId,
         bytes32 _toAddress,
@@ -117,39 +102,47 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
     ) external payable nonReentrant {
-//        uint256 amount = _getAmountAndPayFee(_token, _amount, _minAmount, _feeObj);
-//        require(amount > 0, "OFTWrapper: amount to send is 0");
-//
-//        // move tokens into contract
-//        IOFT token = IOFT(_token);
-//        token.safeTransferFrom(msg.sender, address(this), amount);
-//
-//        // dust will not be transferred across as V2 is limited in only transferring in denominations up to sharedDecimals used
-//        IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amount, _callParams); // swap amount less fees
+        address token = IOFTV2(_proxyOft).token();
+        uint256 amountToSwap = _getAmountAndPayFee(token, _amount, _minAmount, _feeObj);
+        require(amountToSwap > 0, "OFTWrapper: amount to swap is 0");
+
+        _moveProxyTokensToWrapper(token, _proxyOft, amountToSwap);
+        IOFTWithFee(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amountToSwap, _minAmount, _callParams);
     }
 
-    // extracted out of sendOFT() due to too many local variables
+    function _moveProxyTokensToWrapper(address _token, address _proxyOft, uint256 _amount) internal {
+        IOFT token = IOFT(_token);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
+
+        // only call max approval once
+        if (!tokenApproved[_token]) {
+            tokenApproved[_token] = true;
+            // allow proxy to spend the tokens to be transferred
+            token.safeApprove(_proxyOft, MAX_UINT);
+        }
+    }
+
     function _getAmountAndPayFee(
         address _token,
         uint256 _amount,
         uint256 _minAmount,
         FeeObj calldata _feeObj
     ) internal returns (uint256) {
-        (uint256 amount, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_oft, _amount, _feeObj.callerBps);
-        require(amount >= _minAmount, "OFTWrapper: amount to transfer < minAmount");
+        (uint256 amountToSwap, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_token, _amount, _feeObj.callerBps);
+        require(amountToSwap >= _minAmount, "OFTWrapper: amountToSwap < minAmount");
 
         IOFT token = IOFT(_token);
 
         if (wrapperFee > 0) token.safeTransferFrom(msg.sender, address(this), wrapperFee); // pay wrapper
         if (callerFee > 0) token.safeTransferFrom(msg.sender, _feeObj.caller, callerFee); // pay caller
 
-        emit WrapperFees(_feeObj.partnerId, wrapperFee, callerFee);
+        emit WrapperFees(_feeObj.partnerId, _token, wrapperFee, callerFee);
 
-        return amount;
+        return amountToSwap;
     }
 
     function getAmountAndFees(
-        address _oft,
+        address _token, // will be the token on proxies, and the oft on non-proxy
         uint256 _amount,
         uint256 _callerBps
     )
@@ -164,10 +157,10 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     {
         uint256 wrapperBps;
 
-        if (oftBps[_oft] == MAX_UINT) {
+        if (oftBps[_token] == MAX_UINT) {
             wrapperBps = 0;
-        } else if (oftBps[_oft] > 0) {
-            wrapperBps = oftBps[_oft];
+        } else if (oftBps[_token] > 0) {
+            wrapperBps = oftBps[_token];
         } else {
             wrapperBps = defaultBps;
         }

@@ -2,7 +2,7 @@ const { expect } = require("chai")
 const { ethers } = require("hardhat")
 const { BigNumber } = require("ethers")
 
-describe("OFTWrapperV2:", function () {
+describe("OFTWrapperProxyV2:", function () {
     const chainIdSrc = 1
     const chainIdDst = 2
     const sharedDecimals = 6
@@ -11,7 +11,7 @@ describe("OFTWrapperV2:", function () {
     const partnerId = "0x0003"
 
     let owner, caller, badUser, OftWrapper, oftWrapper, LZEndpointMock, lzEndpointSrcMock, lzEndpointDstMock
-    let OFTV2, OFTSrc, OFTDst, dstPath, srcPath, BP_DENOMINATOR, MAX_UINT
+    let OFTV2, OFTProxyV2, MockToken, OFTProxySrc, MockTokenSrc, OFTDst, dstPath, srcPath, BP_DENOMINATOR, MAX_UINT
 
     before(async function () {
         ;[owner, caller, badUser] = await ethers.getSigners()
@@ -19,6 +19,8 @@ describe("OFTWrapperV2:", function () {
         LZEndpointMock = await ethers.getContractFactory("LZEndpointMock")
         OftWrapper = await ethers.getContractFactory("OFTWrapper")
         OFTV2 = await ethers.getContractFactory("MockOFTV2")
+        OFTProxyV2 = await ethers.getContractFactory("MockOFTProxyV2")
+        MockToken = await ethers.getContractFactory("MockToken")
     })
 
     beforeEach(async function () {
@@ -28,24 +30,25 @@ describe("OFTWrapperV2:", function () {
         lzEndpointSrcMock = await LZEndpointMock.deploy(chainIdSrc)
         lzEndpointDstMock = await LZEndpointMock.deploy(chainIdDst)
 
-        OFTSrc = await OFTV2.deploy(name, symbol, sharedDecimals, lzEndpointSrcMock.address)
+        MockTokenSrc = await MockToken.deploy("Test", "test")
+        OFTProxySrc = await OFTProxyV2.deploy(MockTokenSrc.address, sharedDecimals, lzEndpointSrcMock.address)
         OFTDst = await OFTV2.deploy(name, symbol, sharedDecimals, lzEndpointDstMock.address)
 
         // internal bookkeeping for endpoints (not part of a real deploy, just for this test)
         lzEndpointSrcMock.setDestLzEndpoint(OFTDst.address, lzEndpointDstMock.address)
-        lzEndpointDstMock.setDestLzEndpoint(OFTSrc.address, lzEndpointSrcMock.address)
+        lzEndpointDstMock.setDestLzEndpoint(OFTProxySrc.address, lzEndpointSrcMock.address)
 
         BP_DENOMINATOR = await oftWrapper.BPS_DENOMINATOR()
         MAX_UINT = await oftWrapper.MAX_UINT()
 
         // set each contracts source address so it can send to each other
-        dstPath = ethers.utils.solidityPack(["address", "address"], [OFTDst.address, OFTSrc.address])
-        srcPath = ethers.utils.solidityPack(["address", "address"], [OFTSrc.address, OFTDst.address])
-        await OFTSrc.setTrustedRemote(chainIdDst, dstPath) // for A, set B
+        dstPath = ethers.utils.solidityPack(["address", "address"], [OFTDst.address, OFTProxySrc.address])
+        srcPath = ethers.utils.solidityPack(["address", "address"], [OFTProxySrc.address, OFTDst.address])
+        await OFTProxySrc.setTrustedRemote(chainIdDst, dstPath) // for A, set B
         await OFTDst.setTrustedRemote(chainIdSrc, srcPath) // for B, set A
     })
 
-    it("sendOFTV2()", async function () {
+    it("sendProxyOFTV2()", async function () {
         let amountToMint = BigNumber.from("1000000000000000000000000")
         let amountToSwap = BigNumber.from("100000000000000")
         let defaultBps = 1000
@@ -55,22 +58,23 @@ describe("OFTWrapperV2:", function () {
 
         await oftWrapper.setDefaultBps(defaultBps)
 
-        await OFTSrc.mint(owner.address, amountToMint)
+        await MockTokenSrc.mint(owner.address, amountToMint)
 
-        expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(amountToMint)
+        expect(await MockTokenSrc.balanceOf(owner.address)).to.be.equal(amountToMint)
+        expect(await MockTokenSrc.balanceOf(oftWrapper.address)).to.be.equal(0)
         expect(await OFTDst.balanceOf(owner.address)).to.be.equal(0)
         expect(await OFTDst.balanceOf(caller.address)).to.be.equal(0)
         expect(await OFTDst.balanceOf(oftWrapper.address)).to.be.equal(0)
 
-        await OFTSrc.approve(oftWrapper.address, amountToSwap)
+        await MockTokenSrc.approve(oftWrapper.address, amountToSwap)
 
-        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTSrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
+        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTProxySrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
             .nativeFee
 
-        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(MockTokenSrc.address, amountToSwap, callerBps)
 
-        await oftWrapper.sendOFTV2(
-            OFTSrc.address,
+        await oftWrapper.sendProxyOFTV2(
+            OFTProxySrc.address,
             chainIdDst,
             bytes32ToAddress,
             amountToSwap,
@@ -80,13 +84,13 @@ describe("OFTWrapperV2:", function () {
             { value: lzFee }
         )
 
-        expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap))
+        expect(await MockTokenSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap))
         expect(await OFTDst.balanceOf(owner.address)).to.be.equal(amount)
-        expect(await OFTSrc.balanceOf(caller.address)).to.be.equal(callerFee)
-        expect(await OFTSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
+        expect(await MockTokenSrc.balanceOf(caller.address)).to.be.equal(callerFee)
+        expect(await MockTokenSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
     })
 
-    it("sendOFTV2() - OFTWrapper: amountToSwap < minAmount", async function () {
+    it("sendProxyOFTV2() - amountToSwap < minAmount", async function () {
         let amountToMint = BigNumber.from("1000000000000000000000000")
         let amountToSwap = BigNumber.from("100000000000000")
         let defaultBps = 1
@@ -95,18 +99,18 @@ describe("OFTWrapperV2:", function () {
         const bytes32ToAddress = ethers.utils.defaultAbiCoder.encode(["address"], [owner.address])
 
         await oftWrapper.setDefaultBps(defaultBps)
-        await OFTSrc.mint(owner.address, amountToMint)
-        await OFTSrc.approve(oftWrapper.address, amountToSwap)
-        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTSrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
+        await MockTokenSrc.mint(owner.address, amountToMint)
+        await MockTokenSrc.approve(oftWrapper.address, amountToSwap)
+        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTProxySrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
             .nativeFee
 
-        let { amount } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount } = await oftWrapper.getAmountAndFees(MockTokenSrc.address, amountToSwap, callerBps)
 
         expect(amount).to.be.lt(amountToSwap)
 
         await expect(
-            oftWrapper.sendOFTV2(
-                OFTSrc.address,
+            oftWrapper.sendProxyOFTV2(
+                OFTProxySrc.address,
                 chainIdDst,
                 bytes32ToAddress,
                 amountToSwap,
@@ -127,15 +131,15 @@ describe("OFTWrapperV2:", function () {
         const bytes32ToAddress = ethers.utils.defaultAbiCoder.encode(["address"], [owner.address])
 
         await oftWrapper.setDefaultBps(defaultBps)
-        await OFTSrc.mint(owner.address, amountToMint)
-        await OFTSrc.approve(oftWrapper.address, amountToSwap)
-        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTSrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
+        await MockTokenSrc.mint(owner.address, amountToMint)
+        await MockTokenSrc.approve(oftWrapper.address, amountToSwap)
+        const lzFee = (await oftWrapper.estimateSendFeeV2(OFTProxySrc.address, chainIdDst, bytes32ToAddress, amountToSwap, false, "0x", feeObj))
             .nativeFee
 
-        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(OFTSrc.address, amountToSwap, callerBps)
+        let { amount, wrapperFee, callerFee } = await oftWrapper.getAmountAndFees(MockTokenSrc.address, amountToSwap, callerBps)
 
-        await oftWrapper.sendOFTV2(
-            OFTSrc.address,
+        await oftWrapper.sendProxyOFTV2(
+            OFTProxySrc.address,
             chainIdDst,
             bytes32ToAddress,
             amountToSwap,
@@ -145,11 +149,11 @@ describe("OFTWrapperV2:", function () {
             { value: lzFee }
         )
 
-        expect(await OFTSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
-        expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap))
+        expect(await MockTokenSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
+        expect(await MockTokenSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap))
         expect(await OFTDst.balanceOf(owner.address)).to.be.equal(amount)
-        expect(await OFTSrc.balanceOf(caller.address)).to.be.equal(callerFee)
-        await oftWrapper.withdrawFees(OFTSrc.address, owner.address, wrapperFee)
-        expect(await OFTSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap).add(wrapperFee))
+        expect(await MockTokenSrc.balanceOf(caller.address)).to.be.equal(callerFee)
+        await oftWrapper.withdrawFees(MockTokenSrc.address, owner.address, wrapperFee)
+        expect(await MockTokenSrc.balanceOf(owner.address)).to.be.equal(amountToMint.sub(amountToSwap).add(wrapperFee))
     })
 })
