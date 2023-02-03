@@ -36,6 +36,26 @@ interface IOFTWrapper {
         FeeObj calldata _feeObj
     ) external payable;
 
+    function sendProxyOFTV2(
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
+    function sendProxyOFTFeeV2(
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
     function getAmountAndFees(
         address _oft,
         uint256 _amount,

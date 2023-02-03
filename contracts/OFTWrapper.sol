@@ -54,7 +54,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _zroPaymentAddress,
         bytes calldata _adapterParams,
         FeeObj calldata _feeObj
-    ) external payable override nonReentrant {
+    ) external payable nonReentrant {
         uint256 amount = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
         require(amount > 0, "OFTWrapper: amount to send is 0");
 
