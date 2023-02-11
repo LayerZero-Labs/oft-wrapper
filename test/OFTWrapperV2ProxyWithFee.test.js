@@ -198,6 +198,6 @@ describe("OFTWrapperProxyWithFeeV2:", function () {
                 feeObj,
                 { value: lzFee }
             )
-        ).to.be.revertedWith("OFTWrapper: amountToSwap < minAmount")
+        ).to.be.revertedWith("OFTWrapper: not enough amountToSwap")
     })
 })

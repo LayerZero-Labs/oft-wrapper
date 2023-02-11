@@ -115,7 +115,7 @@ describe("OFTWrapperV2:", function () {
                 feeObj,
                 { value: lzFee }
             )
-        ).to.be.revertedWith("OFTWrapper: amountToSwap < minAmount")
+        ).to.be.revertedWith("OFTWrapper: not enough amountToSwap")
     })
 
     it("withdrawFees()", async function () {
