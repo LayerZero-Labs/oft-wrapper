@@ -15,7 +15,6 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
 
     uint256 public constant BPS_DENOMINATOR = 10000;
     uint256 public constant MAX_UINT = 2**256 - 1; // indicates a bp fee of 0 that overrides the default bps
-    mapping(address => bool) public tokenApproved;
 
     uint256 public defaultBps;
     mapping(address => uint256) public oftBps;
