@@ -47,7 +47,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _oft,
         uint16 _dstChainId,
         bytes calldata _toAddress,
-        uint _amount,
+        uint256 _amount,
         uint256 _minAmount,
         address payable _refundAddress,
         address _zroPaymentAddress,
@@ -62,7 +62,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _oft,
         uint16 _dstChainId,
         bytes32 _toAddress,
-        uint _amount,
+        uint256 _amount,
         uint256 _minAmount,
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
@@ -71,11 +71,24 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         IOFTV2(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amountToSwap, _callParams);
     }
 
+    function sendOFTFeeV2(
+        address _oft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint256 _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable nonReentrant {
+        uint256 amountToSwap = _getAmountAndPayFee(_oft, _amount, _minAmount, _feeObj);
+        IOFTWithFee(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amountToSwap, _minAmount, _callParams);
+    }
+
     function sendProxyOFTV2(
         address _proxyOft,
         uint16 _dstChainId,
         bytes32 _toAddress,
-        uint _amount,
+        uint256 _amount,
         uint256 _minAmount,
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
@@ -92,7 +105,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _proxyOft,
         uint16 _dstChainId,
         bytes32 _toAddress,
-        uint _amount,
+        uint256 _amount,
         uint256 _minAmount,
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
@@ -174,7 +187,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _oft,
         uint16 _dstChainId,
         bytes calldata _toAddress,
-        uint _amount,
+        uint256 _amount,
         bool _useZro,
         bytes calldata _adapterParams,
         FeeObj calldata _feeObj
@@ -188,7 +201,7 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         address _oft,
         uint16 _dstChainId,
         bytes32 _toAddress,
-        uint _amount,
+        uint256 _amount,
         bool _useZro,
         bytes calldata _adapterParams,
         FeeObj calldata _feeObj

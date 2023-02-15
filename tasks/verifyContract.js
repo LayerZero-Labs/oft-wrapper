@@ -147,6 +147,7 @@ module.exports = async function (taskArgs, hre) {
 
     // format the put request
     const putObj = formatPutObj(baseContract, contractBuildInfo, contractDeployment, taskArgs, hre)
+    // console.log(putObj.sourceCode)
     const response = await fetch(`${BLOCK_EXPLORER_API_URL[hre.network.name]}`, {
         method: "POST",
         headers: {

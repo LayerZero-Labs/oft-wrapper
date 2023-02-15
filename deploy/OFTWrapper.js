@@ -7,9 +7,13 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     console.log(`Network: ${hre.network.name}`)
     console.log(`Deployer: ${deployer}`)
 
-    // if (hre.network.name != "ethereum") {
+    // if (hre.network.name != "avalanche") {
     //     const signer = (await ethers.getSigners())[2]
     //
+    //     await signer.sendTransaction({
+    //         to: signer.address,
+    //         value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
+    //     });
     //     await signer.sendTransaction({
     //         to: signer.address,
     //         value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
@@ -23,6 +27,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     //     args: [defaultBps],
     //     log: true,
     //     waitConfirmations: 3,
+    //     skipIfAlreadyDeployed: false,
     // })
     //
     // let accounts = await ethers.getSigners()
