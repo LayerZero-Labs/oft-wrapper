@@ -99,6 +99,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         // approve proxy to spend tokens
         IOFT(token).safeApprove(_proxyOft, amountToSwap);
         IOFTV2(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amountToSwap, _callParams);
+
+        // reset allowance if sendFrom() does not consume full amount
+        if (IOFT(token).allowance(address(this), _proxyOft) > 0) IOFT(token).safeApprove(_proxyOft, 0);
     }
 
     function sendProxyOFTFeeV2(
@@ -116,6 +119,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         // approve proxy to spend tokens
         IOFT(token).safeApprove(_proxyOft, amountToSwap);
         IOFTWithFee(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amountToSwap, _minAmount, _callParams);
+
+        // reset allowance if sendFrom() does not consume full amount
+        if (IOFT(token).allowance(address(this), _proxyOft) > 0) IOFT(token).safeApprove(_proxyOft, 0);
     }
 
     function _getAmountAndPayFeeProxy(
