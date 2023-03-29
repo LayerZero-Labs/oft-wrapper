@@ -123,6 +123,11 @@ module.exports = {
       chainId: 1088,
       accounts: accounts(),
     },
+    moonbeam: {
+      url: `https://rpc.api.moonbeam.network`,
+      chainId: 1284,
+      accounts: accounts(),
+    },
 
     "ethereum-goerli": {
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161", // public infura endpoint

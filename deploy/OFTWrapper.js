@@ -7,17 +7,16 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     console.log(`Network: ${hre.network.name}`)
     console.log(`Deployer: ${deployer}`)
 
-    // if (hre.network.name != "avalanche") {
+    // if (hre.network.name == "moonbeam") {
     //     const signer = (await ethers.getSigners())[2]
     //
-    //     await signer.sendTransaction({
-    //         to: signer.address,
-    //         value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
-    //     });
-    //     await signer.sendTransaction({
-    //         to: signer.address,
-    //         value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
-    //     });
+    //     let txNum = 10
+    //     for (let i = 0 ; i < txNum; i++) {
+    //         await signer.sendTransaction({
+    //             to: signer.address,
+    //             value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
+    //         });
+    //     }
     // }
 
     // const defaultBps = 2
@@ -29,13 +28,15 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     //     waitConfirmations: 3,
     //     skipIfAlreadyDeployed: false,
     // })
-    //
+
+
+    // const newOwner = hre.network.name == "moonbeam" ? "0x1D7C6783328C145393e84fb47a7f7C548f5Ee28d" : MULTI_SIGS[hre.network.name]
     // let accounts = await ethers.getSigners()
     // let owner = accounts[2] // me
     // let oftWrapper = await ethers.getContract("OFTWrapper")
-    // await oftWrapper.connect(owner).transferOwnership(MULTI_SIGS[hre.network.name])
-
-    await hre.run("verifyContract", { contract: "OFTWrapper" })
+    // await oftWrapper.connect(owner).transferOwnership(newOwner)
+    //
+    // await hre.run("verifyContract", { contract: "OFTWrapper" })
 }
 
 module.exports.tags = ["OFTWrapper", "test"]
