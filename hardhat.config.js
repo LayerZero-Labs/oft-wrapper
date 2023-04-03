@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-require('hardhat-contract-sizer');
+// require('hardhat-contract-sizer');
 require("@nomiclabs/hardhat-waffle");
 require(`@nomiclabs/hardhat-etherscan`);
 require("solidity-coverage");
@@ -47,6 +47,10 @@ function accounts(chainKey) {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+
+  gasReporter: {
+    enabled: false
+  },
 
   solidity: {
     compilers: [
@@ -117,6 +121,11 @@ module.exports = {
     metis: {
       url: `https://andromeda.metis.io/?owner=1088`,
       chainId: 1088,
+      accounts: accounts(),
+    },
+    moonbeam: {
+      url: `https://rpc.api.moonbeam.network`,
+      chainId: 1284,
       accounts: accounts(),
     },
 

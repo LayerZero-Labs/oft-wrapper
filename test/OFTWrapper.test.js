@@ -181,7 +181,7 @@ describe("OFTWrapper:", function () {
         expect(await OFTSrc.balanceOf(oftWrapper.address)).to.be.equal(wrapperFee)
     })
 
-    it("sendOFT() - amount to transfer < min amount", async function () {
+    it("sendOFT() - OFTWrapper: amountToSwap < minAmount", async function () {
         let amountToSwap = 10000000
         let defaultBps = 1
         let callerBps = 0
@@ -209,7 +209,7 @@ describe("OFTWrapper:", function () {
                 feeObj,
                 { value: lzFee }
             )
-        ).to.be.revertedWith("OFTWrapper: amount to transfer < minAmount")
+        ).to.be.revertedWith("OFTWrapper: not enough amountToSwap")
     })
 
     it("withdrawFees()", async function () {
