@@ -58,6 +58,30 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         IOFT(_oft).sendFrom{value: msg.value}(msg.sender, _dstChainId, _toAddress, amountToSwap, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
+    function sendProxyOFT(
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint256 _amount,
+        uint256 _minAmount,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams,
+        FeeObj calldata _feeObj
+    ) external payable nonReentrant {
+        address token = IOFTV2(_proxyOft).token();
+        {
+            uint256 amountToSwap = _getAmountAndPayFeeProxy(token, _amount, _minAmount, _feeObj);
+
+            // approve proxy to spend tokens
+            IOFT(token).safeApprove(_proxyOft, amountToSwap);
+            IOFT(_proxyOft).sendFrom{value: msg.value}(address(this), _dstChainId, _toAddress, amountToSwap, _refundAddress, _zroPaymentAddress, _adapterParams);
+        }
+
+        // reset allowance if sendFrom() does not consume full amount
+        if (IOFT(token).allowance(address(this), _proxyOft) > 0) IOFT(token).safeApprove(_proxyOft, 0);
+    }
+
     function sendOFTV2(
         address _oft,
         uint16 _dstChainId,
