@@ -104,7 +104,7 @@ module.exports = {
       accounts: accounts(),
     },
     arbitrum: {
-      url: `https://arb1.arbitrum.io/rpc`,
+      url: `https://arbitrum-one.public.blastapi.io`,
       chainId: 42161,
       accounts: accounts(),
     },

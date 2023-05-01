@@ -1,4 +1,5 @@
 const MULTI_SIGS = require("../constants/multisig.json")
+const verify = require('@layerzerolabs/verify-contract')
 
 module.exports = async function ({ deployments, getNamedAccounts }) {
     const { deploy } = deployments
@@ -28,15 +29,15 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     //     waitConfirmations: 3,
     //     skipIfAlreadyDeployed: false,
     // })
-
-
+    //
+    //
     // const newOwner = hre.network.name == "moonbeam" ? "0x1D7C6783328C145393e84fb47a7f7C548f5Ee28d" : MULTI_SIGS[hre.network.name]
     // let accounts = await ethers.getSigners()
     // let owner = accounts[2] // me
     // let oftWrapper = await ethers.getContract("OFTWrapper")
     // await oftWrapper.connect(owner).transferOwnership(newOwner)
-    //
-    // await hre.run("verifyContract", { contract: "OFTWrapper" })
+
+    await verify(hre.network.name, "OFTWrapper")
 }
 
 module.exports.tags = ["OFTWrapper", "test"]
