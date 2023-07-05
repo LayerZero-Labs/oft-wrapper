@@ -123,3 +123,5 @@ deployments/localhost*
 *.csv
 
 /artifacts
+artifacts-zk
+cache-zk

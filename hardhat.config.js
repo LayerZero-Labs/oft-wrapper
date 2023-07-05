@@ -1,14 +1,12 @@
 require("dotenv").config();
 
-// require('hardhat-contract-sizer');
-require("@nomiclabs/hardhat-waffle");
-require(`@nomiclabs/hardhat-etherscan`);
-require("solidity-coverage");
-require('hardhat-gas-reporter');
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
-require('@openzeppelin/hardhat-upgrades');
 require('./tasks');
+
+require('@matterlabs/hardhat-zksync-deploy');
+require('@matterlabs/hardhat-zksync-solc');
+require ("@matterlabs/hardhat-zksync-verify");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -47,30 +45,15 @@ function accounts(chainKey) {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-
-  gasReporter: {
-    enabled: false
+  zksolc: {
+    version: '1.3.10',
+    compilerSource: 'binary',
+    settings: {},
   },
+  defaultNetwork: "zksync-mainnet",
 
   solidity: {
-    compilers: [
-      {
-        version: "0.8.12",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200
-          }
-        }
-      }
-    ]
-  },
-
-  // solidity: "0.8.4",
-  contractSizer: {
-    alphaSort: false,
-    runOnCompile: true,
-    disambiguatePaths: false,
+    version: "0.8.8",
   },
 
   namedAccounts: {
@@ -127,6 +110,18 @@ module.exports = {
       url: `https://rpc.api.moonbeam.network`,
       chainId: 1284,
       accounts: accounts(),
+    },
+    'zk-evm': {
+      url: "https://zkevm-rpc.com",
+      chainId: 1101,
+      accounts: accounts(),
+    },
+    'zksync-mainnet': {
+      url: 'https://zksync2-mainnet.zksync.io',
+      ethNetwork: 'https://eth-mainnet.public.blastapi.io', // Can also be the RPC URL of the Ethereum network (e.g. `https://goerli.infura.io/v3/<API_KEY>`)
+      zksync: true,
+      // accounts: evmPrivateKeysFromKeys(Stage.MAINNET),
+      verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification'
     },
 
     "ethereum-goerli": {
