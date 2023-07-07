@@ -26,11 +26,45 @@ interface IOFTWrapper {
         FeeObj calldata _feeObj
     ) external payable;
 
+    function sendProxyOFT(
+        address _proxyOft,
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint256 _amount,
+        uint256 _minAmount,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
+    function sendNativeOFT(
+        address _nativeOft,
+        uint16 _dstChainId,
+        bytes calldata _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
     function sendOFTV2(
         address _oft,
         uint16 _dstChainId,
         bytes32 _toAddress,
         uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
+    function sendOFTFeeV2(
+        address _oft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint256 _amount,
         uint256 _minAmount,
         IOFTV2.LzCallParams calldata _callParams,
         FeeObj calldata _feeObj
@@ -48,6 +82,16 @@ interface IOFTWrapper {
 
     function sendProxyOFTFeeV2(
         address _proxyOft,
+        uint16 _dstChainId,
+        bytes32 _toAddress,
+        uint _amount,
+        uint256 _minAmount,
+        IOFTV2.LzCallParams calldata _callParams,
+        FeeObj calldata _feeObj
+    ) external payable;
+
+    function sendNativeOFTFeeV2(
+        address _nativeOft,
         uint16 _dstChainId,
         bytes32 _toAddress,
         uint _amount,
