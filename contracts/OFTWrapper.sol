@@ -96,10 +96,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     ) external payable nonReentrant {
         require(msg.value >= _amount, "OFTWrapper: not enough value sent");
 
-        // take fee in NativeOFT token as the caller might not be able to receive ETH
+        INativeOFT(_nativeOft).deposit{value: _amount}();
         uint256 amountToSwap = _getAmountAndPayFeeNative(_nativeOft, _amount, _minAmount, _feeObj);
-        uint256 fee = _amount - amountToSwap;
-        IOFT(_nativeOft).sendFrom{value: msg.value - fee}(address(this), _dstChainId, _toAddress, amountToSwap, _refundAddress, _zroPaymentAddress, _adapterParams);
+        IOFT(_nativeOft).sendFrom{value: msg.value - _amount}(address(this), _dstChainId, _toAddress, amountToSwap, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
     function sendOFTV2(
@@ -179,9 +178,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
     ) external payable nonReentrant {
         require(msg.value >= _amount, "OFTWrapper: not enough value sent");
 
+        INativeOFT(_nativeOft).deposit{value: _amount}();
         uint256 amountToSwap = _getAmountAndPayFeeNative(_nativeOft, _amount, _minAmount, _feeObj);
-        uint256 fee = _amount - amountToSwap;
-        IOFTWithFee(_nativeOft).sendFrom{value: msg.value - fee}(address(this), _dstChainId, _toAddress, amountToSwap, _minAmount, _callParams);
+        IOFTWithFee(_nativeOft).sendFrom{value: msg.value - _amount}(address(this), _dstChainId, _toAddress, amountToSwap, _minAmount, _callParams);
     }
 
     function _getAmountAndPayFeeProxy(
@@ -222,13 +221,9 @@ contract OFTWrapper is IOFTWrapper, Ownable, ReentrancyGuard {
         (uint256 amountToSwap, uint256 wrapperFee, uint256 callerFee) = getAmountAndFees(_nativeOft, _amount, _feeObj.callerBps);
         require(amountToSwap >= _minAmount && amountToSwap > 0, "OFTWrapper: not enough amountToSwap");
 
-        if (wrapperFee > 0) INativeOFT(_nativeOft).deposit{value: wrapperFee}(); // pay wrapper
-
-        // pay caller
-        if (callerFee > 0) {
-            INativeOFT(_nativeOft).deposit{value: callerFee}();
-            IOFT(_nativeOft).safeTransfer(_feeObj.caller, callerFee);
-        }
+        // pay fee in NativeOFT token as the caller might not be able to receive ETH
+        // wrapper fee is already in the contract after calling NativeOFT.deposit()
+        if (callerFee > 0) IOFT(_nativeOft).safeTransfer(_feeObj.caller, callerFee); // pay caller
 
         emit WrapperFees(_feeObj.partnerId, _nativeOft, wrapperFee, callerFee);
 
