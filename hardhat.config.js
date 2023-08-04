@@ -110,6 +110,11 @@ module.exports = {
       chainId: 1284,
       accounts: accounts(),
     },
+    'base-mainnet': {
+      url: `https://base.blockpi.network/v1/rpc/public\t`,
+      chainId: 8453,
+      accounts: accounts(),
+    },
     'zk-evm': {
       url: "https://zkevm-rpc.com",
       chainId: 1101,
