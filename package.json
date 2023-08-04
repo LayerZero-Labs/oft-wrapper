@@ -25,7 +25,7 @@
   "devDependencies": {
     "@layerzerolabs/prettier-plugin-solidity": "^1.0.0-beta.19",
     "@layerzerolabs/solidity-examples": "0.0.6",
-    "@layerzerolabs/verify-contract": "1.0.420",
+    "@layerzerolabs/verify-contract": "1.0.423",
     "@matterlabs/hardhat-zksync-deploy": "^0.6.3",
     "@matterlabs/hardhat-zksync-solc": "^0.3.14",
     "@matterlabs/hardhat-zksync-verify": "^0.2.0",

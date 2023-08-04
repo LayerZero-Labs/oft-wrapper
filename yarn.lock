@@ -473,10 +473,10 @@
     hardhat-deploy-ethers "^0.3.0-beta.13"
     hardhat-gas-reporter "^1.0.6"
 
-"@layerzerolabs/verify-contract@1.0.420":
-  version "1.0.420"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/verify-contract/-/verify-contract-1.0.420.tgz#c7ba0527f21b74a96394c18e4c2c9ab27b9be55c"
-  integrity sha512-Ihcx/IHCHXFBkHsVVUCGkToKSylnY9c48J9SxZThKY36mXc3J4eKZ0Ia/3lVlkaWGA/S2epLuxlkLfzFNld25w==
+"@layerzerolabs/verify-contract@1.0.423":
+  version "1.0.423"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/verify-contract/-/verify-contract-1.0.423.tgz#480a0b61058bf5bcac501739278997cf42abb42a"
+  integrity sha512-CZFTWisFlv9imBuc0qtu4iVpwbT7WnkRMA4HQmRH7de8Qm/NA7+OEqZEMZK3jARf3NKtOrViWRnQCMfqsLnl6w==
 
 "@matterlabs/hardhat-zksync-deploy@^0.6.3":
   version "0.6.3"
