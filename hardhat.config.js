@@ -120,6 +120,17 @@ module.exports = {
       chainId: 1101,
       accounts: accounts(),
     },
+    'kava': {
+      url: "https://kava-evm.publicnode.com",
+      chainId: 2222,
+      accounts: accounts(),
+    },
+
+    'linea': {
+      url: "https://rpc.linea.build",
+      chainId: 59144,
+      accounts: accounts(),
+    },
     'zksync-mainnet': {
       url: 'https://zksync2-mainnet.zksync.io',
       ethNetwork: 'https://eth-mainnet.public.blastapi.io', // Can also be the RPC URL of the Ethereum network (e.g. `https://goerli.infura.io/v3/<API_KEY>`)
