@@ -57,9 +57,9 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     } else {
 
         // uncomment to tweek wallet indexes for same deployment addresses
-        if (hre.network.name == "base-mainnet") {
+        if (hre.network.name == "kava") {
             const signer = (await ethers.getSigners())[2]
-
+            //
             // // includes pending TX count
             // const currentWalletNonce = await ethers.provider.getTransactionCount(signer.address, 'pending')
             // // gets wallet to this nonce, NOT the 'next' nonce to be used
@@ -80,13 +80,26 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         const { deploy } = deployments
         const { deployer } = await getNamedAccounts()
 
-        const newOwner = hre.network.name == "moonbeam" ? "0x1D7C6783328C145393e84fb47a7f7C548f5Ee28d" : MULTI_SIGS[hre.network.name]
-        let accounts = await ethers.getSigners()
-        let owner = accounts[2] // me
-        let oftWrapper = await ethers.getContract("OFTWrapper")
-        await oftWrapper.connect(owner).transferOwnership(newOwner)
+        console.log(`Network: ${hre.network.name}`)
+        console.log(`Deployer: ${deployer}`)
 
-        await verify(hre.network.name, ["OFTWrapper"])
+
+        // const { address } = await deploy("OFTWrapper", {
+        //     from: deployer,
+        //     args: [defaultBps],
+        //     log: true,
+        //     waitConfirmations: 3,
+        //     skipIfAlreadyDeployed: false,
+        // })
+
+        // const newOwner = hre.network.name == "moonbeam" ? "0x1D7C6783328C145393e84fb47a7f7C548f5Ee28d" : MULTI_SIGS[hre.network.name]
+        // console.log("New owner: ", newOwner)
+        // let accounts = await ethers.getSigners()
+        // let owner = accounts[2] // me
+        // let oftWrapper = await ethers.getContract("OFTWrapper")
+        // await oftWrapper.connect(owner).transferOwnership(newOwner)
+
+        // await verify(hre.network.name, ["OFTWrapper"])
     }
 
 }
