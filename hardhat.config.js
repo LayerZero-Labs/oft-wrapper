@@ -155,7 +155,7 @@ module.exports = {
       accounts: accounts(),
     },
     'celo': {
-      url: "wss://forno.celo.org/ws",
+      url: "https://forno.celo.org",
       chainId: 42220,
       accounts: accounts(),
     },
@@ -190,7 +190,7 @@ module.exports = {
       accounts: accounts(),
     },
     'moonriver': {
-      url: "wss://wss.api.moonriver.moonbeam.network",
+      url: "https://moonriver.unitedbloc.com:2000",
       chainId: 1285,
       accounts: accounts(),
     },
