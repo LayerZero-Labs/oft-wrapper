@@ -84,22 +84,22 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         console.log(`Deployer: ${deployer}`)
 
 
-        const { address } = await deploy("OFTWrapper", {
-            from: deployer,
-            args: [defaultBps],
-            log: true,
-            waitConfirmations: 3,
-            skipIfAlreadyDeployed: false,
-        })
-
-        const newOwner = MULTI_SIGS[hre.network.name]
-        console.log("New owner: ", newOwner)
-        let accounts = await ethers.getSigners()
-        let owner = accounts[2] // me
-        let oftWrapper = await ethers.getContract("OFTWrapper")
-        await oftWrapper.connect(owner).transferOwnership(newOwner)
-
-        // await verify(hre.network.name, ["OFTWrapper"])
+        // const { address } = await deploy("OFTWrapper", {
+        //     from: deployer,
+        //     args: [defaultBps],
+        //     log: true,
+        //     waitConfirmations: 3,
+        //     skipIfAlreadyDeployed: false,
+        // })
+        //
+        // const newOwner = MULTI_SIGS[hre.network.name]
+        // console.log("New owner: ", newOwner)
+        // let accounts = await ethers.getSigners()
+        // let owner = accounts[2] // me
+        // let oftWrapper = await ethers.getContract("OFTWrapper")
+        // await oftWrapper.connect(owner).transferOwnership(newOwner)
+        //
+        await verify(hre.network.name, ["OFTWrapper"])
     }
 
 }

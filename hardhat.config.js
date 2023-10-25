@@ -239,6 +239,11 @@ module.exports = {
       chainId: 40,
       accounts: accounts(),
     },
+    'scroll': {
+      url: "https://rpc.scroll.io",
+      chainId: 534352,
+      accounts: accounts()
+    },
 
 
     "ethereum-goerli": {
