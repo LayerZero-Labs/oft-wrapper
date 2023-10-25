@@ -56,26 +56,26 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         console.log(`The message now is ${await contract.owner()}`);
     } else {
 
-        // uncomment to tweek wallet indexes for same deployment addresses
-        if (hre.network.name == "kava") {
+        // uncomment to tweak wallet indexes for same deployment addresses
+        // if (hre.network.name == "kava") {
             const signer = (await ethers.getSigners())[2]
-            //
-            // // includes pending TX count
-            // const currentWalletNonce = await ethers.provider.getTransactionCount(signer.address, 'pending')
-            // // gets wallet to this nonce, NOT the 'next' nonce to be used
-            // const desiredWalletNonce = 14
-            //
-            // // number of tx to achieve desired wallet nonce
-            // let txNum = desiredWalletNonce - currentWalletNonce
-            //
-            // // nonce starts at 0, so use <= in loop
-            // for (let i = 0 ; i <= txNum; i++) {
-            //     await signer.sendTransaction({
-            //         to: signer.address,
-            //         value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
-            //     });
-            // }
-        }
+
+            // includes pending TX count
+            const currentWalletNonce = await ethers.provider.getTransactionCount(signer.address, 'pending')
+            // gets wallet to this nonce, NOT the 'next' nonce to be used
+            const desiredWalletNonce = 14
+
+            // number of tx to achieve desired wallet nonce
+            let txNum = desiredWalletNonce - currentWalletNonce
+
+            // nonce starts at 0, so use <= in loop
+            for (let i = 0 ; i <= txNum; i++) {
+                await signer.sendTransaction({
+                    to: signer.address,
+                    value: ethers.utils.parseEther("0"), // Sends exactly 1.0 ether
+                });
+            }
+        // }
 
         const { deploy } = deployments
         const { deployer } = await getNamedAccounts()
@@ -91,15 +91,15 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         //     waitConfirmations: 3,
         //     skipIfAlreadyDeployed: false,
         // })
-
-        // const newOwner = hre.network.name == "moonbeam" ? "0x1D7C6783328C145393e84fb47a7f7C548f5Ee28d" : MULTI_SIGS[hre.network.name]
+        //
+        // const newOwner = MULTI_SIGS[hre.network.name]
         // console.log("New owner: ", newOwner)
         // let accounts = await ethers.getSigners()
         // let owner = accounts[2] // me
         // let oftWrapper = await ethers.getContract("OFTWrapper")
         // await oftWrapper.connect(owner).transferOwnership(newOwner)
-
-        // await verify(hre.network.name, ["OFTWrapper"])
+        //
+        await verify(hre.network.name, ["OFTWrapper"])
     }
 
 }

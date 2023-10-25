@@ -139,6 +139,113 @@ module.exports = {
       verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification'
     },
 
+    'dfk': {
+      url: "https://dfkchain.api.onfinality.io/public",
+      chainId: 53935,
+      accounts: accounts(),
+    },
+    'harmony': {
+      url: "https://a.api.s0.t.hmny.io",
+      chainId: 1666600000,
+      accounts: accounts(),
+    },
+    'dexalot': {
+      url: "https://subnets.avax.network/dexalot/mainnet/rpc",
+      chainId: 432204,
+      accounts: accounts(),
+    },
+    'celo': {
+      url: "https://forno.celo.org",
+      chainId: 42220,
+      accounts: accounts(),
+    },
+    'fuse': {
+      url: "https://fuse-mainnet.chainstacklabs.com",
+      chainId: 122,
+      accounts: accounts(),
+    },
+    'gnosis': {
+      url: "https://rpc.ankr.com/gnosis\t",
+      chainId: 100,
+      accounts: accounts(),
+    },
+    'klaytn': {
+      url: "https://public-node-api.klaytnapi.com/v1/cypress",
+      chainId: 8217,
+      accounts: accounts(),
+    },
+    'coredao': {
+      url: "https://rpc-core.icecreamswap.com",
+      chainId: 1116,
+      accounts: accounts(),
+    },
+    'okx': {
+      url: "https://oktc-mainnet.public.blastapi.io",
+      chainId: 66,
+      accounts: accounts(),
+    },
+    'canto': {
+      url: "https://mainnode.plexnode.org:8545",
+      chainId: 7700,
+      accounts: accounts(),
+    },
+    'moonriver': {
+      url: "https://moonriver.unitedbloc.com:2000",
+      chainId: 1285,
+      accounts: accounts(),
+    },
+    'tenet': {
+      url: "https://tenet-evm.publicnode.com",
+      chainId: 1559,
+      accounts: accounts(),
+    },
+    'nova': {
+      url: "https://dev.rpc.novanetwork.io",
+      chainId: 87,
+      accounts: accounts(),
+    },
+    'meter': {
+      url: "https://rpc.meter.io",
+      chainId: 82,
+      accounts: accounts(),
+    },
+    'mantle': {
+      url: "https://rpc.mantle.xyz",
+      chainId: 5000,
+      accounts: accounts(),
+    },
+    'zora': {
+      url: "https://rpc.zora.energy",
+      chainId: 7777777,
+      accounts: accounts(),
+    },
+    'tomo': {
+      url: "https://tomo.blockpi.network/v1/rpc/public",
+      chainId: 88,
+      accounts: accounts(),
+    },
+    'loot': {
+      url: "https://rpc.lootchain.com/http",
+      chainId: 5151706,
+      accounts: accounts(),
+    },
+    'meritcircle': {
+      url: "https://subnets.avax.network/beam/mainnet/rpc",
+      chainId: 4337,
+      accounts: accounts(),
+    },
+    'telos': {
+      url: "https://mainnet.telos.net/evm",
+      chainId: 40,
+      accounts: accounts(),
+    },
+    'scroll': {
+      url: "https://rpc.scroll.io",
+      chainId: 534352,
+      accounts: accounts()
+    },
+
+
     "ethereum-goerli": {
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161", // public infura endpoint
       chainId: 5,
