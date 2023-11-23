@@ -56,6 +56,12 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         console.log(`The message now is ${await contract.owner()}`);
     } else {
 
+        const { deploy } = deployments
+        const { deployer } = await getNamedAccounts()
+
+        console.log(`Network: ${hre.network.name}`)
+        console.log(`Deployer: ${deployer}`)
+
         // uncomment to tweak wallet indexes for same deployment addresses
         // if (hre.network.name == "kava") {
             const signer = (await ethers.getSigners())[2]
@@ -76,12 +82,6 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
                 });
             }
         // }
-
-        const { deploy } = deployments
-        const { deployer } = await getNamedAccounts()
-
-        console.log(`Network: ${hre.network.name}`)
-        console.log(`Deployer: ${deployer}`)
 
 
         // const { address } = await deploy("OFTWrapper", {
