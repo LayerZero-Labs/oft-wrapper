@@ -98,7 +98,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         // let owner = accounts[2] // me
         // let oftWrapper = await ethers.getContract("OFTWrapper")
         // await oftWrapper.connect(owner).transferOwnership(newOwner)
-        //
+
         await verify(hre.network.name, ["OFTWrapper"])
     }
 
